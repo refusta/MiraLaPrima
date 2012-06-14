@@ -21,9 +21,9 @@ public class Main {
         Float prima_delta = null;
         Float prima_percent = null;
 
-        Document doc = Jsoup.connect("http://www.bloomberg.com/quote/!PORT10:IND").get();
+        Document doc = Jsoup.connect("http://www.bloomberg.com/quote/!SPN:IND").get();
         Element riskPremium = doc.select(".price").last();
-//        System.out.println("Prima: " + riskPremium.text());
+        System.out.println("Prima: " + riskPremium.text());
         prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
 
         Elements riskPremiumsUp = doc.select(".trending_up");
