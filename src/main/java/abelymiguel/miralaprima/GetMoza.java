@@ -119,7 +119,7 @@ public class GetMoza extends HttpServlet {
         try {
             String confFilePath = getServletContext().getRealPath("/")
                     + "WEB-INF" + File.separator + "dbconf.xml";
-            ResultSet rs = DBConnect.getInstance(confFilePath).doQuery("SELECT url_prima FROM primas WHERE approved = 1");
+            ResultSet rs = DBConnect.getInstance(confFilePath).doQuery("SELECT url_prima, provider FROM primas WHERE approved = 1");
 
             while (rs.next()) {
                 String url = rs.getString("url_prima");
