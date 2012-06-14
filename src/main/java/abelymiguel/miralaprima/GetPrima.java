@@ -40,10 +40,6 @@ public class GetPrima extends HttpServlet {
     protected void processRequest(HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
-        //Web pages need "text/html"
-        //response.setContentType("text/html;charset=UTF-8");
-        //Json responses need "application/json"
-//        response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
         response.setContentType("text/javascript;charset=UTF-8");
 
