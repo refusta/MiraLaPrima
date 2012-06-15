@@ -198,7 +198,8 @@ public class GetPrima extends HttpServlet {
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
         server.setHandler(context);
-        context.addServlet(new ServletHolder(new GetPrima()), "/*");
+        context.addServlet(new ServletHolder(new GetPrima()), "/getPrima");
+        context.addServlet(new ServletHolder(new GetMoza()), "/getMoza");
         server.start();
         server.join();
     }
