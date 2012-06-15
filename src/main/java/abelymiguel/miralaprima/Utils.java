@@ -17,7 +17,6 @@ import java.sql.SQLException;
 public class Utils {
 
     public static Connection getConnection() throws URISyntaxException, SQLException {
-        System.out.println("**************"+ System.getenv("CLEARDB_DATABASE_URL"));
         URI dbUri = new URI(System.getenv("CLEARDB_DATABASE_URL"));
 
         String username = dbUri.getUserInfo().split(":")[0];
