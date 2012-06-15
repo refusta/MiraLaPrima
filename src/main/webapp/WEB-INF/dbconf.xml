@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <dbconf>
-    <dbUri>jdbc:mysql://localhost:3306/miralaprima</dbUri>
-    <dbUser>root</dbUser>
-    <dbPassword>tragasables</dbPassword>
+    <dbUri>jdbc:mysql://us-cdbr-east.cleardb.com/heroku_e3c20314821e7d1</dbUri>
+    <dbUser>79a040c602fda9</dbUser>
+    <dbPassword>e5d0391f</dbPassword>
 </dbconf>

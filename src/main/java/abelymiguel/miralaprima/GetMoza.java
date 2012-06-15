@@ -7,6 +7,7 @@ package abelymiguel.miralaprima;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URISyntaxException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -117,9 +118,10 @@ public class GetMoza extends HttpServlet {
 
         HashMap<String, String> respuestaJson = new HashMap<String, String>();
         try {
-            String confFilePath = getServletContext().getRealPath("/")
-                    + "WEB-INF" + File.separator + "dbconf.xml";
-            ResultSet rs = DBConnect.getInstance(confFilePath).doQuery("SELECT url_prima, provider FROM primas WHERE approved = 1");
+//            String confFilePath = getServletContext().getRealPath("/")
+//                    + "WEB-INF" + File.separator + "dbconf.xml";
+//            ResultSet rs = DBConnect.getInstance(confFilePath).doQuery("SELECT url_prima, provider FROM photos WHERE approved = 1");
+            ResultSet rs = Utils.getConnection().createStatement().executeQuery("SELECT url_prima, provider FROM photos WHERE approved = 1");
 
             while (rs.next()) {
                 String url = rs.getString("url_prima");
@@ -127,13 +129,9 @@ public class GetMoza extends HttpServlet {
                 respuestaJson.put(url, provider);
             }
             rs.close();
-        } catch (JDOMException ex) {
-            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SQLException ex) {
+            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (URISyntaxException ex) {
             Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
         }
         return respuestaJson;
