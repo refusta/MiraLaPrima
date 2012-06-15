@@ -16,13 +16,17 @@ import java.sql.SQLException;
  */
 public class Utils {
 
-    public static Connection getConnection() throws URISyntaxException, SQLException {
-        URI dbUri = new URI(System.getenv("CLEARDB_DATABASE_URL"));
+  private static Connection con = null;
 
-        String username = dbUri.getUserInfo().split(":")[0];
-        String password = dbUri.getUserInfo().split(":")[1];
-        String dbUrl = "jdbc:mysql://" + dbUri.getHost() + dbUri.getPath();
+  public static Connection getConnection() throws URISyntaxException, SQLException {
+    if (con == null) {
+      URI dbUri = new URI(System.getenv("CLEARDB_DATABASE_URL"));
 
-        return DriverManager.getConnection(dbUrl, username, password);
+      String username = dbUri.getUserInfo().split(":")[0];
+      String password = dbUri.getUserInfo().split(":")[1];
+      String dbUrl = "jdbc:mysql://" + dbUri.getHost() + dbUri.getPath();
+      con = DriverManager.getConnection(dbUrl, username, password);
     }
+    return con;
+  }
 }
