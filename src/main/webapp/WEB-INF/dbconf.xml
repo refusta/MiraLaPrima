@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<dbconf>
-    <dbUri>jdbc:mysql://us-cdbr-east.cleardb.com/heroku_e3c20314821e7d1</dbUri>
-    <dbUser>79a040c602fda9</dbUser>
-    <dbPassword>e5d0391f</dbPassword>
-</dbconf>

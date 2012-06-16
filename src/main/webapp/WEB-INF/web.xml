@@ -8,6 +8,10 @@
         <servlet-name>GetMoza</servlet-name>
         <servlet-class>abelymiguel.miralaprima.GetMoza</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>SetMoza</servlet-name>
+        <servlet-class>abelymiguel.miralaprima.SetMoza</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>GetPrima</servlet-name>
         <url-pattern>/GetPrima</url-pattern>
@@ -15,6 +19,10 @@
     <servlet-mapping>
         <servlet-name>GetMoza</servlet-name>
         <url-pattern>/GetMoza</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SetMoza</servlet-name>
+        <url-pattern>/SetMoza</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
