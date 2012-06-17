@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  *
@@ -114,36 +113,42 @@ public class GetMoza extends HttpServlet {
         return "Short description";
     }// </editor-fold>
 
-    private ArrayList<HashMap<String, Object>> searchInDB(String country_code) {
+    private ArrayList<HashMap<String, Object>> searchInDB(String country) {
 
         ArrayList<HashMap<String, Object>> respuestaJson = new ArrayList<HashMap<String, Object>>();
         try {
-            
+
             ResultSet rs;
 
-            if (country_code == null) {
-                rs = Utils.getConnection().createStatement().executeQuery("SELECT url_prima, provider FROM photos WHERE approved = 1");
+            if (country == null) {
+                rs = Utils.getConnection().createStatement().executeQuery("SELECT url_prima, provider, country_code FROM photos WHERE approved = 1");
 
                 while (rs.next()) {
                     HashMap<String, Object> objetoJson = new HashMap<String, Object>();
                     String url = rs.getString("url_prima");
                     String provider = rs.getString("provider");
-                    objetoJson.put(url, provider);
+                    String country_code = rs.getString("country_code");
+                    objetoJson.put("photo_url", url);
+                    objetoJson.put("provider", provider);
+                    objetoJson.put("country_code", country_code);
                     respuestaJson.add(objetoJson);
                 }
             } else {
-                rs = Utils.getConnection().createStatement().executeQuery("SELECT url_prima, provider FROM photos WHERE approved = 1 AND country_code='" + country_code + "'");
+                rs = Utils.getConnection().createStatement().executeQuery("SELECT url_prima, provider, country_code FROM photos WHERE approved = 1 AND country_code='" + country + "'");
 
                 while (rs.next()) {
                     HashMap<String, Object> objetoJson = new HashMap<String, Object>();
                     String url = rs.getString("url_prima");
                     String provider = rs.getString("provider");
-                    objetoJson.put(url, provider);
+                    String country_code = rs.getString("country_code");
+                    objetoJson.put("photo_url", url);
+                    objetoJson.put("provider", provider);
+                    objetoJson.put("country_code", country_code);
                     respuestaJson.add(objetoJson);
                 }
             }
 
-            rs.close();
+//            rs.close();
         } catch (SQLException ex) {
             Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
         } catch (URISyntaxException ex) {
