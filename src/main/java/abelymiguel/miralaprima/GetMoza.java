@@ -148,7 +148,7 @@ public class GetMoza extends HttpServlet {
                 }
             }
 
-//            rs.close();
+            rs.close();
         } catch (SQLException ex) {
             Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
         } catch (URISyntaxException ex) {
