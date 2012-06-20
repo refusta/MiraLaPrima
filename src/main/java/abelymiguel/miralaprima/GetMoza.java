@@ -56,11 +56,20 @@ public class GetMoza extends HttpServlet {
         }
         response.setContentType("text/javascript;charset=UTF-8");
 
-        String country_code = null;
+        String country_code;
+        int limit;
+        String limitStr;
         country_code = request.getParameter("country_code");
+        limitStr = request.getParameter("limit");
+
+        if (limitStr != null) {
+            limit = Integer.parseInt(limitStr);
+        } else {
+            limit = -1;
+        }
 
         String json_str;
-        JSONArray jsonArray = new JSONArray(this.searchInDB(country_code));
+        JSONArray jsonArray = new JSONArray(this.searchInDB(country_code, limit));
         json_str = jsonArray.toString();
 
         String jsonpCallback = request.getParameter("callback");
@@ -113,39 +122,41 @@ public class GetMoza extends HttpServlet {
         return "Short description";
     }// </editor-fold>
 
-    private ArrayList<HashMap<String, Object>> searchInDB(String country) {
+    private ArrayList<HashMap<String, Object>> searchInDB(String country, int rows) {
 
         ArrayList<HashMap<String, Object>> respuestaJson = new ArrayList<HashMap<String, Object>>();
         try {
 
             ResultSet rs;
-
+            String query;
+            String randomQuery = " ORDER BY RAND() LIMIT " + rows;
             if (country == null) {
-                rs = Utils.getConnection().createStatement().executeQuery("SELECT url_prima, provider, country_code FROM photos WHERE approved = 1");
-
-                while (rs.next()) {
-                    HashMap<String, Object> objetoJson = new HashMap<String, Object>();
-                    String url = rs.getString("url_prima");
-                    String provider = rs.getString("provider");
-                    String country_code = rs.getString("country_code");
-                    objetoJson.put("photo_url", url);
-                    objetoJson.put("provider", provider);
-                    objetoJson.put("country_code", country_code);
-                    respuestaJson.add(objetoJson);
+                if (rows != -1) {
+                    query = "SELECT url_prima, provider, country_code FROM photos WHERE approved = 1" + randomQuery;
+                } else {
+                    query = "SELECT url_prima, provider, country_code FROM photos WHERE approved = 1";
                 }
             } else {
-                rs = Utils.getConnection().createStatement().executeQuery("SELECT url_prima, provider, country_code FROM photos WHERE approved = 1 AND country_code='" + country + "'");
-
-                while (rs.next()) {
-                    HashMap<String, Object> objetoJson = new HashMap<String, Object>();
-                    String url = rs.getString("url_prima");
-                    String provider = rs.getString("provider");
-                    String country_code = rs.getString("country_code");
-                    objetoJson.put("photo_url", url);
-                    objetoJson.put("provider", provider);
-                    objetoJson.put("country_code", country_code);
-                    respuestaJson.add(objetoJson);
+                if (rows != -1) {
+                    query = "SELECT url_prima, provider, country_code FROM photos WHERE approved = 1 AND country_code='" + country + "'" + randomQuery;
+                } else {
+                    query = "SELECT url_prima, provider, country_code FROM photos WHERE approved = 1 AND country_code='" + country + "'";
                 }
+
+            }
+
+
+            rs = Utils.getConnection().createStatement().executeQuery(query);
+
+            while (rs.next()) {
+                HashMap<String, Object> objetoJson = new HashMap<String, Object>();
+                String url = rs.getString("url_prima");
+                String provider = rs.getString("provider");
+                String country_code = rs.getString("country_code");
+                objetoJson.put("photo_url", url);
+                objetoJson.put("provider", provider);
+                objetoJson.put("country_code", country_code);
+                respuestaJson.add(objetoJson);
             }
 
             rs.close();
