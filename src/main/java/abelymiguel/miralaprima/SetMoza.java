@@ -1,23 +1,25 @@
 /*
-=============
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+ =============
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package abelymiguel.miralaprima;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -69,7 +71,7 @@ public class SetMoza extends HttpServlet {
         JSONObject jsonObject;
         String json_str;
 
-        jsonObject = new JSONObject(this.setInDB(url_moza, country_code));
+        jsonObject = new JSONObject(this.setMozaInDB(url_moza, country_code));
         json_str = jsonObject.toString();
 
         String jsonpCallback = request.getParameter("callback");
@@ -122,22 +124,26 @@ public class SetMoza extends HttpServlet {
         return "Short description";
     }// </editor-fold>
 
-    private HashMap<String, String> setInDB(String url_moza, String country_code) {
+    private HashMap<String, String> setMozaInDB(String url_moza, String country_code) {
 
         HashMap<String, String> respuestaJson = new HashMap<String, String>();
         try {
-            Timestamp date_added = this.getTimestamp();
+            Timestamp date_added = Utils.getTimestamp();
             String provider;
-            if (url_moza.contains("http://")){
+            if (url_moza.contains("http://")) {
                 provider = url_moza.replace("http://", "");
                 provider = "http://" + provider.substring(0, provider.indexOf("/"));
             } else {
                 provider = "Provider not found";
             }
-            Utils.getConnection().createStatement().execute("INSERT INTO `photos` (`url_prima`, `provider`, `approved`, `country_code`, `date_added`) VALUES ('" + url_moza + "', '" + provider + "', 0, '" + country_code + "', '" + date_added + "')");
-            respuestaJson.put("result", "OK");
+            if (checkUrlMoza(url_moza) && checkMimeUrlMoza(url_moza)) {
+                Utils.getConnection().createStatement().execute("INSERT INTO `photos` (`url_prima`, `provider`, `approved`, `country_code`, `date_added`) VALUES ('" + url_moza + "', '" + provider + "', 0, '" + country_code + "', '" + date_added + "')");
+                respuestaJson.put("result", "OK");
+            } else {
+                respuestaJson.put("result", "ERROR");
+            }
         } catch (SQLException ex) {
-            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(GetMoza.class.getName()).log(Level.WARNING, null, ex);
             respuestaJson.put("result", "ERROR");
         } catch (URISyntaxException ex) {
             Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
@@ -146,12 +152,44 @@ public class SetMoza extends HttpServlet {
         return respuestaJson;
     }
 
-    private Timestamp getTimestamp() {
+    private Boolean checkUrlMoza(String url_moza) {
+        Boolean result;
+        URL url;
+        HttpURLConnection conexion;
+        try {
+            url = new URL(url_moza);
+            conexion = (HttpURLConnection) url.openConnection();
+            conexion.connect();
+            BufferedReader respContent;
+            respContent = new BufferedReader(new InputStreamReader(conexion.getInputStream()));
+            respContent.close();
+            conexion.disconnect();
+            result = true;
+        } catch (IOException e) {
+            System.out.println(e.getLocalizedMessage());
+            result = false;
+        }
 
-        Timestamp date_added = null;
-        java.util.Date date = new java.util.Date();
-        date_added = new Timestamp(date.getTime());
+        return result;
+    }
 
-        return date_added;
+    private Boolean checkMimeUrlMoza(String url_moza) {
+        String type;
+        Boolean result = false;
+        URL url;
+        URLConnection uc = null;
+        try {
+            url = new URL(url_moza);
+            uc = url.openConnection();
+        } catch (IOException ex) {
+            Logger.getLogger(SetMoza.class.getName()).log(Level.SEVERE, null, ex);
+            result = false;
+        }
+        type = uc.getContentType();
+        if (type.equals("image/gif") || type.equals("image/jpeg")){
+            result = true;
+        }
+//        System.out.println(type);
+        return result;
     }
 }
