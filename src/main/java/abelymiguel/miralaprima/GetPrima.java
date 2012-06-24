@@ -46,6 +46,7 @@ public class GetPrima extends HttpServlet {
 
     private Connection _con;
     private Statement _stmt;
+    private ResultSet _rs;
 
     /**
      * Processes requests for both HTTP
@@ -63,6 +64,7 @@ public class GetPrima extends HttpServlet {
         try {
             _con = Utils.getConnection();
             _stmt = _con.createStatement();
+            
         } catch (URISyntaxException ex) {
             Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SQLException ex) {
@@ -94,6 +96,7 @@ public class GetPrima extends HttpServlet {
         try {
             _con.close();
             _stmt.close();
+            _rs.close();
         } catch (SQLException ex) {
             Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -254,17 +257,15 @@ public class GetPrima extends HttpServlet {
 
         HashMap<String, Object> respuestaJson = new HashMap<String, Object>();
 
-        ResultSet rs;
-
         if (country != null) {
             try {
 //                Connection con = Utils.getConnection();
 //                Statement stmt = _con.createStatement();
-                rs = _stmt.executeQuery("SELECT * FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
-                while (rs.next()) {
-                    Float prima_value = rs.getFloat("prima_value");
-                    Float prima_delta = rs.getFloat("prima_delta");
-                    Float prima_percent = rs.getFloat("prima_percent");
+                _rs = _stmt.executeQuery("SELECT * FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
+                while (_rs.next()) {
+                    Float prima_value = _rs.getFloat("prima_value");
+                    Float prima_delta = _rs.getFloat("prima_delta");
+                    Float prima_percent = _rs.getFloat("prima_percent");
                     String name = this.getNameFromCountryCode(country);
                     respuestaJson.put("prima_value", prima_value);
                     respuestaJson.put("prima_delta", prima_delta);
@@ -272,7 +273,7 @@ public class GetPrima extends HttpServlet {
                     respuestaJson.put("country_code", country);
                     respuestaJson.put("name", name);
                 }
-                rs.close();
+//                rs.close();
 //                stmt.close();
 //                con.close();
 //            } catch (URISyntaxException ex) {
@@ -289,17 +290,17 @@ public class GetPrima extends HttpServlet {
 
         int id = 0;
 
-        ResultSet rs;
+//        ResultSet rs;
 
         if (country != null) {
             try {
 //                Connection con = Utils.getConnection();
 //                Statement stmt = _con.createStatement();
-                rs = _stmt.executeQuery("SELECT id FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
-                while (rs.next()) {
-                    id = rs.getInt("id");
+                _rs = _stmt.executeQuery("SELECT id FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
+                while (_rs.next()) {
+                    id = _rs.getInt("id");
                 }
-                rs.close();
+//                rs.close();
 //                stmt.close();
 //                con.close();
 //            } catch (URISyntaxException ex) {
@@ -315,17 +316,17 @@ public class GetPrima extends HttpServlet {
     private String getNameFromCountryCode(String country) {
 
         String name = null;
-        ResultSet rs;
+//        ResultSet rs;
 
         if (country != null) {
             try {
 //                Connection con = Utils.getConnection();
 //                Statement stmt = _con.createStatement();
-                rs = _stmt.executeQuery("SELECT name FROM `countries` WHERE `country_code` = '" + country + "'");
-                while (rs.next()) {
-                    name = rs.getString("name");
+                _rs = _stmt.executeQuery("SELECT name FROM `countries` WHERE `country_code` = '" + country + "'");
+                while (_rs.next()) {
+                    name = _rs.getString("name");
                 }
-                rs.close();
+//                rs.close();
 //                stmt.close();
 //                con.close();
 //            } catch (URISyntaxException ex) {
@@ -432,15 +433,15 @@ public class GetPrima extends HttpServlet {
     private Timestamp getDateOfLastStored(String country) {
 
         Timestamp dateLastStored = null;
-        ResultSet rs;
+//        ResultSet rs;
 
         if (country != null) {
             try {
 //                Connection con = Utils.getConnection();
 //                Statement stmt = con.createStatement();
-                rs = _stmt.executeQuery("SELECT last_update FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
-                while (rs.next()) {
-                    dateLastStored = rs.getTimestamp("last_update");
+                _rs = _stmt.executeQuery("SELECT last_update FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
+                while (_rs.next()) {
+                    dateLastStored = _rs.getTimestamp("last_update");
                 }
 //                stmt.close();
 //                con.close();
