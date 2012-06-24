@@ -18,8 +18,10 @@ package abelymiguel.miralaprima;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -144,9 +146,9 @@ public class GetMoza extends HttpServlet {
                 }
 
             }
-
-
-            rs = Utils.getConnection().createStatement().executeQuery(query);
+            Connection con = Utils.getConnection();
+            Statement stmt = con.createStatement();
+            rs = stmt.executeQuery(query);
 
             while (rs.next()) {
                 HashMap<String, Object> objetoJson = new HashMap<String, Object>();
@@ -159,6 +161,8 @@ public class GetMoza extends HttpServlet {
                 respuestaJson.add(objetoJson);
             }
 
+            con.close();
+            stmt.close();
             rs.close();
         } catch (SQLException ex) {
             Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);

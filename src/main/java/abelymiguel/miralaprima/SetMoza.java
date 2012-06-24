@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -128,7 +130,7 @@ public class SetMoza extends HttpServlet {
 
         HashMap<String, String> respuestaJson = new HashMap<String, String>();
         try {
-            Timestamp date_added = Utils.getTimestamp();
+            Timestamp date_added = this.getTimestamp();
             String provider;
             if (url_moza.contains("http://")) {
                 provider = url_moza.replace("http://", "");
@@ -137,8 +139,12 @@ public class SetMoza extends HttpServlet {
                 provider = "Provider not found";
             }
             if (checkUrlMoza(url_moza) && checkMimeUrlMoza(url_moza)) {
-                Utils.getConnection().createStatement().execute("INSERT INTO `photos` (`url_prima`, `provider`, `approved`, `country_code`, `date_added`) VALUES ('" + url_moza + "', '" + provider + "', 0, '" + country_code + "', '" + date_added + "')");
+                Connection con = Utils.getConnection();
+                Statement stmt = con.createStatement();
+                stmt.execute("INSERT INTO `photos` (`url_prima`, `provider`, `approved`, `country_code`, `date_added`) VALUES ('" + url_moza + "', '" + provider + "', 0, '" + country_code + "', '" + date_added + "')");
                 respuestaJson.put("result", "OK");
+                stmt.close();
+                con.close();
             } else {
                 respuestaJson.put("result", "ERROR");
             }
@@ -186,10 +192,18 @@ public class SetMoza extends HttpServlet {
             result = false;
         }
         type = uc.getContentType();
-        if (type.equals("image/gif") || type.equals("image/jpeg")){
+        if (type.equals("image/jpeg") || type.equals("image/png")) {
             result = true;
         }
 //        System.out.println(type);
         return result;
+    }
+
+    private Timestamp getTimestamp() {
+
+        Timestamp date_added;
+        java.util.Date date = new java.util.Date();
+        date_added = new Timestamp(date.getTime());
+        return date_added;
     }
 }

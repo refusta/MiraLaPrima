@@ -33,7 +33,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-  <!-- jsoup HTML parser library @ http://jsoup.org/ -->
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.6.3</version>
@@ -94,5 +93,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

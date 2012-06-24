@@ -17,10 +17,7 @@ package abelymiguel.miralaprima;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 
 /**
  *
@@ -29,21 +26,35 @@ import java.sql.Timestamp;
 public class Utils {
 
     public static Connection getConnection() throws URISyntaxException, SQLException {
+
         URI dbUri = new URI(System.getenv("CLEARDB_DATABASE_URL"));
 
         String username = dbUri.getUserInfo().split(":")[0];
         String password = dbUri.getUserInfo().split(":")[1];
         String dbUrl = "jdbc:mysql://" + dbUri.getHost() + dbUri.getPath();
-        Connection con = DriverManager.getConnection(dbUrl, username, password);
-        return con;
+        Connection _con = DriverManager.getConnection(dbUrl, username, password);
+        return _con;
     }
-
-    public static Timestamp getTimestamp() {
-
-        Timestamp date_added = null;
-        java.util.Date date = new java.util.Date();
-        date_added = new Timestamp(date.getTime());
-
-        return date_added;
-    }
+//    private void close(Connection connection, ResultSet rs, Statement stmt) {
+//        try {
+//            if (rs != null) {
+//                rs.close();
+//            }
+//        } catch (Exception ex) {
+//        } finally {
+//            try {
+//                if (stmt != null) {
+//                    stmt.close();
+//                }
+//            } catch (Exception ex) {
+//            } finally {
+//                try {
+//                    if (connection != null) {
+//                        connection.close();
+//                    }
+//                } catch (Exception ex) {
+//                }
+//            }
+//        }
+//    }
 }

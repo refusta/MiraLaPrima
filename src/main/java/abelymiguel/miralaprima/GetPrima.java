@@ -1,23 +1,26 @@
 /*
-=============
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+ =============
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package abelymiguel.miralaprima;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URISyntaxException;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,6 +44,9 @@ import org.jsoup.select.Elements;
  */
 public class GetPrima extends HttpServlet {
 
+    private Connection _con;
+    private Statement _stmt;
+
     /**
      * Processes requests for both HTTP
      * <code>GET</code> and
@@ -54,6 +60,14 @@ public class GetPrima extends HttpServlet {
     protected void processRequest(HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
+        try {
+            _con = Utils.getConnection();
+            _stmt = _con.createStatement();
+        } catch (URISyntaxException ex) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+        }
         PrintWriter out = response.getWriter();
         response.setContentType("text/javascript;charset=UTF-8");
 
@@ -76,6 +90,12 @@ public class GetPrima extends HttpServlet {
             out.write(jsonpCallback + "(" + json_str + ")");
         } else {
             out.println(json_str);
+        }
+        try {
+            _con.close();
+            _stmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
         }
         out.close();
     }
@@ -126,6 +146,8 @@ public class GetPrima extends HttpServlet {
 
         String country_prime;
         String name;
+
+        String result;
         if (country_code.equals("ES")) {
             country_prime = "!SPN:IND";
             name = "España";
@@ -143,50 +165,74 @@ public class GetPrima extends HttpServlet {
         }
 
         Float prima_value;
-        Float prima_delta = null;
-        Float prima_percent = null;
+        Float prima_delta;
+        Float prima_percent;
 
-        Document doc = null;
-        try {
-            doc = Jsoup.connect("http://www.bloomberg.com/quote/" + country_prime).get();
-        } catch (IOException ex) {
-            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+        if (isUpdated(country_code)) {
+            respuestaJson = getLatestPrimaFromDB(country_code);
+            respuestaJson.put("action", "fromDatabase");
+        } else {
+
+            Document doc;
+            try {
+                doc = Jsoup.connect("http://www.bloomberg.com/quote/" + country_prime).get();
+            } catch (IOException ex) {
+                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+                return getLatestPrimaFromDB(country_code);
+            }
+
+            try {
+                Element riskPremium = doc.select(".price").last();
+//              System.out.println("Prima: " + riskPremium.text());
+                prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
+
+                Elements riskPremiumsUp = doc.select(".trending_up");
+                Elements riskPremiumsDown = doc.select(".trending_down");
+//              System.out.println("Trending: " + riskPremiumsUp.text());
+//              System.out.println("Trending: " + riskPremiumsDown.text());
+
+                if (!riskPremiumsUp.text().equals("")) {
+                    String delta = riskPremiumsUp.text();
+                    prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
+//                  System.out.println("Delta: " + prima_delta);
+
+                    String percent = riskPremiumsUp.text();
+                    prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
+//                  System.out.println("Percent: " + prima_percent);
+                } else if (!riskPremiumsDown.text().equals("")) {
+                    String delta = riskPremiumsDown.text();
+                    prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
+                    prima_delta = prima_delta * -1;
+//                  System.out.println("Delta: " + prima_delta);
+
+                    String percent = riskPremiumsDown.text();
+                    prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
+                    prima_percent = prima_percent * -1;
+//                  System.out.println("Percent: " + prima_percent);
+                } else {
+                    prima_delta = 0f;
+                    prima_percent = 0f;
+                }
+                respuestaJson.put("name", name);
+                respuestaJson.put("country_code", country_code);
+                respuestaJson.put("prima_value", prima_value);
+                respuestaJson.put("prima_delta", prima_delta);
+                respuestaJson.put("prima_percent", prima_percent);
+
+                if (isSameDay(country_code)) {
+                    result = this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
+                    respuestaJson.put("action", "update");
+                    respuestaJson.put("result", result);
+                } else {
+                    result = this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
+                    respuestaJson.put("action", "store");
+                    respuestaJson.put("result", result);
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+                return getLatestPrimaFromDB(country_code);
+            }
         }
-        Element riskPremium = doc.select(".price").last();
-//        System.out.println("Prima: " + riskPremium.text());
-        prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
-
-        Elements riskPremiumsUp = doc.select(".trending_up");
-        Elements riskPremiumsDown = doc.select(".trending_down");
-//        System.out.println("Trending: " + riskPremiumsUp.text());
-//        System.out.println("Trending: " + riskPremiumsDown.text());
-
-        if (!riskPremiumsUp.text().equals("")) {
-            String delta = riskPremiumsUp.text();
-            prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
-//            System.out.println("Delta: " + prima_delta);
-
-            String percent = riskPremiumsUp.text();
-            prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
-//            System.out.println("Percent: " + prima_percent);
-        } else if (!riskPremiumsDown.text().equals("")) {
-            String delta = riskPremiumsDown.text();
-            prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
-            prima_delta = prima_delta * -1;
-//            System.out.println("Delta: " + prima_delta);
-
-            String percent = riskPremiumsDown.text();
-            prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
-            prima_percent = prima_percent * -1;
-//            System.out.println("Percent: " + prima_percent);
-        }
-
-        respuestaJson.put("name", name);
-        respuestaJson.put("country_code", country_code);
-        respuestaJson.put("prima_value", prima_value);
-        respuestaJson.put("prima_delta", prima_delta);
-        respuestaJson.put("prima_percent", prima_percent);
-
         return respuestaJson;
     }
 
@@ -202,6 +248,218 @@ public class GetPrima extends HttpServlet {
             respuestaJson.add(this.getCountry(country));
         }
         return respuestaJson;
+    }
+
+    private HashMap<String, Object> getLatestPrimaFromDB(String country) {
+
+        HashMap<String, Object> respuestaJson = new HashMap<String, Object>();
+
+        ResultSet rs;
+
+        if (country != null) {
+            try {
+//                Connection con = Utils.getConnection();
+//                Statement stmt = _con.createStatement();
+                rs = _stmt.executeQuery("SELECT * FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
+                while (rs.next()) {
+                    Float prima_value = rs.getFloat("prima_value");
+                    Float prima_delta = rs.getFloat("prima_delta");
+                    Float prima_percent = rs.getFloat("prima_percent");
+                    String name = this.getNameFromCountryCode(country);
+                    respuestaJson.put("prima_value", prima_value);
+                    respuestaJson.put("prima_delta", prima_delta);
+                    respuestaJson.put("prima_percent", prima_percent);
+                    respuestaJson.put("country_code", country);
+                    respuestaJson.put("name", name);
+                }
+                rs.close();
+//                stmt.close();
+//                con.close();
+//            } catch (URISyntaxException ex) {
+//                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+
+            } catch (SQLException ex) {
+                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return respuestaJson;
+    }
+
+    private int getLatestPrimaIdFromDB(String country) {
+
+        int id = 0;
+
+        ResultSet rs;
+
+        if (country != null) {
+            try {
+//                Connection con = Utils.getConnection();
+//                Statement stmt = _con.createStatement();
+                rs = _stmt.executeQuery("SELECT id FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
+                while (rs.next()) {
+                    id = rs.getInt("id");
+                }
+                rs.close();
+//                stmt.close();
+//                con.close();
+//            } catch (URISyntaxException ex) {
+//                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+
+            } catch (SQLException ex) {
+                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return id;
+    }
+
+    private String getNameFromCountryCode(String country) {
+
+        String name = null;
+        ResultSet rs;
+
+        if (country != null) {
+            try {
+//                Connection con = Utils.getConnection();
+//                Statement stmt = _con.createStatement();
+                rs = _stmt.executeQuery("SELECT name FROM `countries` WHERE `country_code` = '" + country + "'");
+                while (rs.next()) {
+                    name = rs.getString("name");
+                }
+                rs.close();
+//                stmt.close();
+//                con.close();
+//            } catch (URISyntaxException ex) {
+//                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+
+            } catch (SQLException ex) {
+                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return name;
+    }
+
+    private String storePrimaInDB(Float prima, Float delta, Float percent, String country) {
+
+        String result;
+
+        try {
+//            Connection con = Utils.getConnection();
+//            Statement stmt = _con.createStatement();
+            _stmt.execute("INSERT INTO `heroku_e3c20314821e7d1`.`country_values` (`id`, `country_code`, `prima_value`, `prima_delta`, `prima_percent`, `last_update`) VALUES (null, '" + country + "', " + prima + ", " + delta + ", " + percent + ", '" + this.getTimestamp() + "');");
+            result = "OK";
+//            stmt.close();
+//            con.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+            result = "ERROR";
+//        } catch (URISyntaxException ex) {
+//            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+//            result = "ERROR";
+        }
+        return result;
+    }
+
+    private String updatePrimaInDB(Float prima, Float delta, Float percent, int id) {
+
+        String result;
+        Timestamp ts = this.getTimestamp();
+        try {
+//            Connection con = Utils.getConnection();
+//            Statement stmt = _con.createStatement();
+            _stmt.execute("UPDATE `country_values` SET `prima_value`=" + prima + ", `prima_delta`=" + delta + ", `prima_percent`=" + percent + ", `last_update`='" + ts + "' WHERE `id`='" + id + "';");
+            result = "OK";
+//            stmt.close();
+//            con.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+            result = "ERROR";
+//        } catch (URISyntaxException ex) {
+//            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+//            result = "ERROR";
+        }
+        return result;
+    }
+
+    private Boolean isUpdated(String country) {
+
+        Boolean isUpdated = false;
+
+        Timestamp date_today = this.getTimestamp();
+
+        Timestamp dateLastUpdate = this.getDateOfLastStored(country);
+        if (dateLastUpdate != null) {
+            if (dateLastUpdate.getTime() > date_today.getTime() - 300000) {
+                isUpdated = true;
+            }
+        }
+//        System.out.println("isUpdated "+ isUpdated);
+        return isUpdated;
+    }
+
+    private Boolean isSameDay(String country) {
+
+        Boolean isSameDay = true;
+        try {
+
+            Timestamp dateToday = this.getTimestamp();
+
+            Timestamp dateLastUpdate = this.getDateOfLastStored(country);
+
+//            System.out.println("dateLastUpdate "+ dateLastUpdate);
+
+            Calendar calToday = Calendar.getInstance();
+            calToday.setTime(dateToday);
+
+            Calendar calLastUpdate = Calendar.getInstance();
+            calLastUpdate.setTime(dateLastUpdate);
+
+            if (calToday.get(java.util.Calendar.DAY_OF_MONTH) == calLastUpdate.get(java.util.Calendar.DAY_OF_MONTH)
+                    && calToday.get(java.util.Calendar.MONTH) == calLastUpdate.get(java.util.Calendar.MONTH)
+                    && calToday.get(java.util.Calendar.YEAR) == calLastUpdate.get(java.util.Calendar.YEAR)) {
+                isSameDay = true;
+            } else {
+                isSameDay = false;
+            }
+//            System.out.println("isSameDay "+ isSameDay);
+        } catch (Exception e) {
+            e.getLocalizedMessage();
+        }
+
+
+        return isSameDay;
+    }
+
+    private Timestamp getDateOfLastStored(String country) {
+
+        Timestamp dateLastStored = null;
+        ResultSet rs;
+
+        if (country != null) {
+            try {
+//                Connection con = Utils.getConnection();
+//                Statement stmt = con.createStatement();
+                rs = _stmt.executeQuery("SELECT last_update FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
+                while (rs.next()) {
+                    dateLastStored = rs.getTimestamp("last_update");
+                }
+//                stmt.close();
+//                con.close();
+//            } catch (URISyntaxException ex) {
+//                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+
+            } catch (SQLException ex) {
+                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return dateLastStored;
+    }
+
+    private Timestamp getTimestamp() {
+
+        Timestamp date_added;
+        java.util.Date date = new java.util.Date();
+        date_added = new Timestamp(date.getTime());
+        return date_added;
     }
 
     public static void main(String[] args) throws Exception {
