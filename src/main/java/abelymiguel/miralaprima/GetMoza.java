@@ -38,6 +38,10 @@ import org.json.JSONArray;
  */
 public class GetMoza extends HttpServlet {
 
+    private Connection _con;
+    private Statement _stmt;
+    private ResultSet _rs;
+
     /**
      * Processes requests for both HTTP
      * <code>GET</code> and
@@ -50,6 +54,15 @@ public class GetMoza extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) {
         response.setContentType("text/html;charset=UTF-8");
+        try {
+            _con = Utils.getConnection();
+            _stmt = _con.createStatement();
+        } catch (URISyntaxException ex) {
+            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
+            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         PrintWriter out = null;
         try {
             out = response.getWriter();
@@ -79,6 +92,14 @@ public class GetMoza extends HttpServlet {
             out.write(jsonpCallback + "(" + json_str + ")");
         } else {
             out.println(json_str);
+        }
+
+        try {
+            _con.close();
+            _stmt.close();
+            _rs.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
         }
         out.close();
     }
@@ -128,8 +149,6 @@ public class GetMoza extends HttpServlet {
 
         ArrayList<HashMap<String, Object>> respuestaJson = new ArrayList<HashMap<String, Object>>();
         try {
-
-            ResultSet rs;
             String query;
             String randomQuery = " ORDER BY RAND() LIMIT " + rows;
             if (country == null) {
@@ -146,27 +165,23 @@ public class GetMoza extends HttpServlet {
                 }
 
             }
-            Connection con = Utils.getConnection();
-            Statement stmt = con.createStatement();
-            rs = stmt.executeQuery(query);
+            _rs = _stmt.executeQuery(query);
 
-            while (rs.next()) {
+            while (_rs.next()) {
                 HashMap<String, Object> objetoJson = new HashMap<String, Object>();
-                String url = rs.getString("url_prima");
-                String provider = rs.getString("provider");
-                String country_code = rs.getString("country_code");
+                String url = _rs.getString("url_prima");
+                String provider = _rs.getString("provider");
+                String country_code = _rs.getString("country_code");
                 objetoJson.put("photo_url", url);
                 objetoJson.put("provider", provider);
                 objetoJson.put("country_code", country_code);
                 respuestaJson.add(objetoJson);
             }
 
-            con.close();
-            stmt.close();
-            rs.close();
+            _con.close();
+            _stmt.close();
+            _rs.close();
         } catch (SQLException ex) {
-            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (URISyntaxException ex) {
             Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
         }
         return respuestaJson;

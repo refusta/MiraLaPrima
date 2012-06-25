@@ -20,10 +20,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,6 +36,9 @@ import org.json.JSONObject;
  */
 public class SetMoza extends HttpServlet {
 
+    private Connection _con;
+    private Statement _stmt;
+
     /**
      * Processes requests for both HTTP
      * <code>GET</code> and
@@ -52,6 +52,16 @@ public class SetMoza extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
+
+        try {
+            _con = Utils.getConnection();
+            _stmt = _con.createStatement();
+        } catch (URISyntaxException ex) {
+            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
+            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         PrintWriter out = null;
         try {
             out = response.getWriter();
@@ -81,6 +91,12 @@ public class SetMoza extends HttpServlet {
             out.write(jsonpCallback + "(" + json_str + ")");
         } else {
             out.println(json_str);
+        }
+        try {
+            _con.close();
+            _stmt.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(SetMoza.class.getName()).log(Level.SEVERE, null, ex);
         }
         out.close();
     }
@@ -139,20 +155,13 @@ public class SetMoza extends HttpServlet {
                 provider = "Provider not found";
             }
             if (checkUrlMoza(url_moza) && checkMimeUrlMoza(url_moza)) {
-                Connection con = Utils.getConnection();
-                Statement stmt = con.createStatement();
-                stmt.execute("INSERT INTO `photos` (`url_prima`, `provider`, `approved`, `country_code`, `date_added`) VALUES ('" + url_moza + "', '" + provider + "', 0, '" + country_code + "', '" + date_added + "')");
+                _stmt.execute("INSERT INTO `photos` (`url_prima`, `provider`, `approved`, `country_code`, `date_added`) VALUES ('" + url_moza + "', '" + provider + "', 0, '" + country_code + "', '" + date_added + "')");
                 respuestaJson.put("result", "OK");
-                stmt.close();
-                con.close();
             } else {
                 respuestaJson.put("result", "ERROR");
             }
         } catch (SQLException ex) {
             Logger.getLogger(GetMoza.class.getName()).log(Level.WARNING, null, ex);
-            respuestaJson.put("result", "ERROR");
-        } catch (URISyntaxException ex) {
-            Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
             respuestaJson.put("result", "ERROR");
         }
         return respuestaJson;
