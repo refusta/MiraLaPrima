@@ -16,6 +16,7 @@
 package abelymiguel.miralaprima;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -31,35 +32,51 @@ public class Main {
         Float prima_value;
         Float prima_delta;
         Float prima_percent;
-        
-        Document doc = Jsoup.connect("http://www.bloomberg.com/quote/!SPN:IND").get();
-        Element riskPremium = doc.select(".price").last();
+
+        //BLOOMBERG
+//        Document doc = Jsoup.connect("http://www.bloomberg.com/quote/!SPN:IND").get();
+//        Element riskPremium = doc.select(".price").last();
+//        System.out.println("Prima: " + riskPremium.text());
+//        prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
+//
+//        Elements riskPremiumsUp = doc.select(".trending_up");
+//        Elements riskPremiumsDown = doc.select(".trending_down");
+//        System.out.println("Trending: " + riskPremiumsUp.text());
+//        System.out.println("Trending: " + riskPremiumsDown.text());
+//
+//        if (!riskPremiumsUp.text().equals("")) {
+//            String delta = riskPremiumsUp.text();
+//            prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
+//            System.out.println("Delta: " + prima_delta);
+//
+//            String percent = riskPremiumsUp.text();
+//            prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
+//            System.out.println("Percent: " + prima_percent);
+//        } else if (!riskPremiumsDown.text().equals("")) {
+//            String delta = riskPremiumsDown.text();
+//            prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
+//            prima_delta = prima_delta * -1;
+//            System.out.println("Delta: " + prima_delta);
+//
+//            String percent = riskPremiumsDown.text();
+//            prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
+//            prima_percent = prima_percent * -1;
+//            System.out.println("Percent: " + prima_percent);
+//        }
+
+        //DATOS MACRO
+        Document doc = Jsoup.connect("http://www.datosmacro.com/prima-riesgo/hungria").get();
+        Element riskPremium = doc.select(".numero").first();
         System.out.println("Prima: " + riskPremium.text());
-        prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
+        prima_value = Float.valueOf(riskPremium.text()).floatValue();
+//
+        Element riskDelta = doc.select(".odd").first();
+        String deltaStr = riskDelta.text().substring(riskDelta.text().lastIndexOf(" "));
+        prima_delta = Float.valueOf(deltaStr).floatValue();
+        System.out.println("Trending delta: " + prima_delta);
 
-        Elements riskPremiumsUp = doc.select(".trending_up");
-        Elements riskPremiumsDown = doc.select(".trending_down");
-        System.out.println("Trending: " + riskPremiumsUp.text());
-        System.out.println("Trending: " + riskPremiumsDown.text());
-
-        if (!riskPremiumsUp.text().equals("")) {
-            String delta = riskPremiumsUp.text();
-            prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
-            System.out.println("Delta: " + prima_delta);
-
-            String percent = riskPremiumsUp.text();
-            prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
-            System.out.println("Percent: " + prima_percent);
-        } else if (!riskPremiumsDown.text().equals("")) {
-            String delta = riskPremiumsDown.text();
-            prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
-            prima_delta = prima_delta * -1;
-            System.out.println("Delta: " + prima_delta);
-
-            String percent = riskPremiumsDown.text();
-            prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
-            prima_percent = prima_percent * -1;
-            System.out.println("Percent: " + prima_percent);
-        }
+        prima_percent = 100 *  prima_delta / (prima_value - prima_delta);
+        DecimalFormat dec = new DecimalFormat("###.##");
+        System.out.println("Trending prima_percent: " + dec.format(prima_percent));
     }
 }
