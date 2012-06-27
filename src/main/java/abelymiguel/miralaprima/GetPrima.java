@@ -166,6 +166,9 @@ public class GetPrima extends HttpServlet {
         if (country_code.equals("HU")) {
             country_prime = "hungria";
             name = "Hungria";
+        } else if (country_code.equals("IN")) {
+            country_prime = "india";
+            name = "India";
         } else {
             return respuestaJson;
         }
@@ -200,7 +203,7 @@ public class GetPrima extends HttpServlet {
 
                 String percentStr;
                 prima_percent = 100 * prima_delta / (prima_value - prima_delta);
-                DecimalFormat df = new DecimalFormat("0.00"); 
+                DecimalFormat df = new DecimalFormat("0.00");
                 percentStr = df.format(prima_percent);
                 prima_percent = Float.valueOf(percentStr).floatValue();
                 //                System.out.println("Trending prima_percent: " + prima_percent);
@@ -331,6 +334,7 @@ public class GetPrima extends HttpServlet {
         country_codes.add("IT");
         country_codes.add("GR");
         country_codes.add("HU");
+        country_codes.add("IN");
 
         for (String country : country_codes) {
             respuestaJson.add(this.getCountry(country));

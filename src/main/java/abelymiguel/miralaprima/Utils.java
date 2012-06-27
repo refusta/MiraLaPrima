@@ -35,26 +35,4 @@ public class Utils {
         Connection _con = DriverManager.getConnection(dbUrl, username, password);
         return _con;
     }
-//    private void close(Connection connection, ResultSet rs, Statement stmt) {
-//        try {
-//            if (rs != null) {
-//                rs.close();
-//            }
-//        } catch (Exception ex) {
-//        } finally {
-//            try {
-//                if (stmt != null) {
-//                    stmt.close();
-//                }
-//            } catch (Exception ex) {
-//            } finally {
-//                try {
-//                    if (connection != null) {
-//                        connection.close();
-//                    }
-//                } catch (Exception ex) {
-//                }
-//            }
-//        }
-//    }
 }
