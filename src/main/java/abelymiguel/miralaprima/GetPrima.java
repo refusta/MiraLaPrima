@@ -169,7 +169,7 @@ public class GetPrima extends HttpServlet {
         } else if (country_code.equals("IN")) {
             country_prime = "india";
             name = "India";
-        } else if (country_code.equals("UK")) {
+        } else if (country_code.equals("GB")) {
             country_prime = "uk";
             name = "Reino Unido";
         } else {
@@ -338,7 +338,7 @@ public class GetPrima extends HttpServlet {
         country_codes.add("GR");
         country_codes.add("HU");
         country_codes.add("IN");
-        country_codes.add("UK");
+        country_codes.add("GB");
 
         for (String country : country_codes) {
             respuestaJson.add(this.getCountry(country));
