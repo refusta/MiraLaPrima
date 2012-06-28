@@ -145,77 +145,57 @@ public class GetPrima extends HttpServlet {
         return "This servlet returns the risk premium of a gived country";
     }// </editor-fold>
 
+//    private HashMap<String, Object> getCountry2(String country_code) {
+//        HashMap<String, Object> respuestaJson;
+//        if (country_code.equals("ES") || country_code.equals("IT") || country_code.equals("PT") || country_code.equals("GR")) {
+//            respuestaJson = getCountryBloomberg(country_code);
+//        } else {
+//            respuestaJson = getCountryDMacro(country_code);
+//        }
+//
+//        return respuestaJson;
+//    }
     private HashMap<String, Object> getCountry(String country_code) {
-        HashMap<String, Object> respuestaJson;
-        if (country_code.equals("ES") || country_code.equals("IT") || country_code.equals("PT") || country_code.equals("GR")) {
-            respuestaJson = getCountryBloomberg(country_code);
-        } else {
-            respuestaJson = getCountryDMacro(country_code);
-        }
-
-        return respuestaJson;
-    }
-
-    private HashMap<String, Object> getCountryDMacro(String country_code) {
         HashMap<String, Object> respuestaJson = new HashMap<String, Object>();
-
+        HashMap<String, String> countryData;
+        HashMap<String, Float> primaJson;
         String country_prime;
         String name;
-
+        String providerUrl;
         String result;
-        if (country_code.equals("HU")) {
-            country_prime = "hungria";
-            name = "Hungria";
-        } else if (country_code.equals("IN")) {
-            country_prime = "india";
-            name = "India";
-        } else if (country_code.equals("GB")) {
-            country_prime = "uk";
-            name = "Reino Unido";
-        } else {
-            return respuestaJson;
-        }
 
-        Float prima_value;
-        Float prima_delta;
-        Float prima_percent;
+        try {
 
-        if (isUpdated(country_code)) {
-            respuestaJson = getLatestPrimaFromDB(country_code);
-            respuestaJson.put("action", "fromDatabase");
+            if (isUpdated(country_code)) {
+                respuestaJson = getLatestPrimaFromDB(country_code);
+                respuestaJson.put("action", "fromDatabase");
+            } else {
 
-        } else {
+                countryData = this.getContryData(country_code);
+                country_prime = countryData.get("indexName");
+                name = countryData.get("name");
+                providerUrl = countryData.get("providerUrl");
 
-            Document doc;
-            try {
-                doc = Jsoup.connect("http://www.datosmacro.com/prima-riesgo/" + country_prime).get();
-            } catch (IOException ex) {
-                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
-                return getLatestPrimaFromDB(country_code);
-            }
+                Float prima_value;
+                Float prima_delta;
+                Float prima_percent;
 
-            try {
-                Element riskPremium = doc.select(".numero").first();
-//                System.out.println("Prima: " + riskPremium.text());
-                prima_value = Float.valueOf(riskPremium.text()).floatValue();
+                if (country_code.equals("ES") || country_code.equals("IT") || country_code.equals("PT") || country_code.equals("GR")) {
+                    primaJson = this.getPrimaDataBloom(country_code, providerUrl, country_prime);
+                } else {
+                    primaJson = this.getPrimaDataDMacro(country_code, providerUrl, country_prime);
+                }
 
-                Element riskDelta = doc.select(".odd").first();
-                String deltaStr = riskDelta.text().substring(riskDelta.text().lastIndexOf(" "));
-                prima_delta = Float.valueOf(deltaStr).floatValue();
-//                System.out.println("Trending delta: " + prima_delta);
-
-                String percentStr;
-                prima_percent = 100 * prima_delta / (prima_value - prima_delta);
-                DecimalFormat df = new DecimalFormat("0.00");
-                percentStr = df.format(prima_percent);
-                prima_percent = Float.valueOf(percentStr).floatValue();
-                //                System.out.println("Trending prima_percent: " + prima_percent);
+                prima_value = primaJson.get("prima_value");
+                prima_delta = primaJson.get("prima_delta");
+                prima_percent = primaJson.get("prima_percent");
 
                 respuestaJson.put("name", name);
                 respuestaJson.put("country_code", country_code);
                 respuestaJson.put("prima_value", prima_value);
                 respuestaJson.put("prima_delta", prima_delta);
                 respuestaJson.put("prima_percent", prima_percent);
+
 
                 if (isSameDay(country_code)) {
                     result = this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
@@ -226,109 +206,186 @@ public class GetPrima extends HttpServlet {
                     respuestaJson.put("action", "store");
                     respuestaJson.put("result", result);
                 }
-            } catch (Exception ex) {
-                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
-                return getLatestPrimaFromDB(country_code);
             }
+        } catch (Exception ex) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+            return getLatestPrimaFromDB(country_code);
         }
         return respuestaJson;
     }
 
-    private HashMap<String, Object> getCountryBloomberg(String country_code) {
-        HashMap<String, Object> respuestaJson = new HashMap<String, Object>();
-
-        String country_prime;
-        String name;
-
-        String result;
-        if (country_code.equals("ES")) {
-            country_prime = "!SPN:IND";
-            name = "España";
-        } else if (country_code.equals("IT")) {
-            country_prime = "!IT10:IND";
-            name = "Italia";
-        } else if (country_code.equals("GR")) {
-            country_prime = "!GRK:IND";
-            name = "Grecia";
-        } else if (country_code.equals("PT")) {
-            country_prime = "!PORT10:IND";
-            name = "Portugal";
-        } else {
-            return respuestaJson;
-        }
-
-        Float prima_value;
-        Float prima_delta;
-        Float prima_percent;
-
-        if (isUpdated(country_code)) {
-            respuestaJson = getLatestPrimaFromDB(country_code);
-            respuestaJson.put("action", "fromDatabase");
-        } else {
-
-            Document doc;
-            try {
-                doc = Jsoup.connect("http://www.bloomberg.com/quote/" + country_prime).get();
-            } catch (IOException ex) {
-                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
-                return getLatestPrimaFromDB(country_code);
-            }
-
-            try {
-                Element riskPremium = doc.select(".price").last();
-//              System.out.println("Prima: " + riskPremium.text());
-                prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
-
-                Elements riskPremiumsUp = doc.select(".trending_up");
-                Elements riskPremiumsDown = doc.select(".trending_down");
-//              System.out.println("Trending: " + riskPremiumsUp.text());
-//              System.out.println("Trending: " + riskPremiumsDown.text());
-
-                if (!riskPremiumsUp.text().equals("")) {
-                    String delta = riskPremiumsUp.text();
-                    prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
-//                  System.out.println("Delta: " + prima_delta);
-
-                    String percent = riskPremiumsUp.text();
-                    prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
-//                  System.out.println("Percent: " + prima_percent);
-                } else if (!riskPremiumsDown.text().equals("")) {
-                    String delta = riskPremiumsDown.text();
-                    prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
-                    prima_delta = prima_delta * -1;
-//                  System.out.println("Delta: " + prima_delta);
-
-                    String percent = riskPremiumsDown.text();
-                    prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
-                    prima_percent = prima_percent * -1;
-//                  System.out.println("Percent: " + prima_percent);
-                } else {
-                    prima_delta = 0f;
-                    prima_percent = 0f;
-                }
-                respuestaJson.put("name", name);
-                respuestaJson.put("country_code", country_code);
-                respuestaJson.put("prima_value", prima_value);
-                respuestaJson.put("prima_delta", prima_delta);
-                respuestaJson.put("prima_percent", prima_percent);
-
-                if (isSameDay(country_code)) {
-                    result = this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
-                    respuestaJson.put("action", "update");
-                    respuestaJson.put("result", result);
-                } else {
-                    result = this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
-                    respuestaJson.put("action", "store");
-                    respuestaJson.put("result", result);
-                }
-            } catch (Exception ex) {
-                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
-                return getLatestPrimaFromDB(country_code);
-            }
-        }
-        return respuestaJson;
-    }
-
+//    private HashMap<String, Object> getCountryDMacro(String country_code) {
+//        HashMap<String, Object> respuestaJson = new HashMap<String, Object>();
+//
+//        String country_prime;
+//        String name;
+//
+//        String result;
+//        if (country_code.equals("HU")) {
+//            country_prime = "hungria";
+//            name = "Hungria";
+//        } else if (country_code.equals("IN")) {
+//            country_prime = "india";
+//            name = "India";
+//        } else if (country_code.equals("GB")) {
+//            country_prime = "uk";
+//            name = "Reino Unido";
+//        } else {
+//            return respuestaJson;
+//        }
+//
+//        Float prima_value;
+//        Float prima_delta;
+//        Float prima_percent;
+//
+//        if (isUpdated(country_code)) {
+//            respuestaJson = getLatestPrimaFromDB(country_code);
+//            respuestaJson.put("action", "fromDatabase");
+//
+//        } else {
+//
+//            Document doc;
+//            try {
+//                doc = Jsoup.connect("http://www.datosmacro.com/prima-riesgo/" + country_prime).get();
+//            } catch (IOException ex) {
+//                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+//                return getLatestPrimaFromDB(country_code);
+//            }
+//
+//            try {
+//                Element riskPremium = doc.select(".numero").first();
+////                System.out.println("Prima: " + riskPremium.text());
+//                prima_value = Float.valueOf(riskPremium.text()).floatValue();
+//
+//                Element riskDelta = doc.select(".odd").first();
+//                String deltaStr = riskDelta.text().substring(riskDelta.text().lastIndexOf(" "));
+//                prima_delta = Float.valueOf(deltaStr).floatValue();
+////                System.out.println("Trending delta: " + prima_delta);
+//
+//                String percentStr;
+//                prima_percent = 100 * prima_delta / (prima_value - prima_delta);
+//                DecimalFormat df = new DecimalFormat("0.00");
+//                percentStr = df.format(prima_percent);
+//                prima_percent = Float.valueOf(percentStr).floatValue();
+//                //                System.out.println("Trending prima_percent: " + prima_percent);
+//
+//                respuestaJson.put("name", name);
+//                respuestaJson.put("country_code", country_code);
+//                respuestaJson.put("prima_value", prima_value);
+//                respuestaJson.put("prima_delta", prima_delta);
+//                respuestaJson.put("prima_percent", prima_percent);
+//
+//                if (isSameDay(country_code)) {
+//                    result = this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
+//                    respuestaJson.put("action", "update");
+//                    respuestaJson.put("result", result);
+//                } else {
+//                    result = this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
+//                    respuestaJson.put("action", "store");
+//                    respuestaJson.put("result", result);
+//                }
+//            } catch (Exception ex) {
+//                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+//                return getLatestPrimaFromDB(country_code);
+//            }
+//        }
+//        return respuestaJson;
+//    }
+//
+//    private HashMap<String, Object> getCountryBloomberg(String country_code) {
+//        HashMap<String, Object> respuestaJson = new HashMap<String, Object>();
+//
+//        String country_prime;
+//        String name;
+//
+//        String result;
+//        if (country_code.equals("ES")) {
+//            country_prime = "!SPN:IND";
+//            name = "España";
+//        } else if (country_code.equals("IT")) {
+//            country_prime = "!IT10:IND";
+//            name = "Italia";
+//        } else if (country_code.equals("GR")) {
+//            country_prime = "!GRK:IND";
+//            name = "Grecia";
+//        } else if (country_code.equals("PT")) {
+//            country_prime = "!PORT10:IND";
+//            name = "Portugal";
+//        } else {
+//            return respuestaJson;
+//        }
+//
+//        Float prima_value;
+//        Float prima_delta;
+//        Float prima_percent;
+//
+//        if (isUpdated(country_code)) {
+//            respuestaJson = getLatestPrimaFromDB(country_code);
+//            respuestaJson.put("action", "fromDatabase");
+//        } else {
+//
+//            Document doc;
+//            try {
+//                doc = Jsoup.connect("http://www.bloomberg.com/quote/" + country_prime).get();
+//            } catch (IOException ex) {
+//                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+//                return getLatestPrimaFromDB(country_code);
+//            }
+//
+//            try {
+//                Element riskPremium = doc.select(".price").last();
+////              System.out.println("Prima: " + riskPremium.text());
+//                prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
+//
+//                Elements riskPremiumsUp = doc.select(".trending_up");
+//                Elements riskPremiumsDown = doc.select(".trending_down");
+////              System.out.println("Trending: " + riskPremiumsUp.text());
+////              System.out.println("Trending: " + riskPremiumsDown.text());
+//
+//                if (!riskPremiumsUp.text().equals("")) {
+//                    String delta = riskPremiumsUp.text();
+//                    prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
+////                  System.out.println("Delta: " + prima_delta);
+//
+//                    String percent = riskPremiumsUp.text();
+//                    prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
+////                  System.out.println("Percent: " + prima_percent);
+//                } else if (!riskPremiumsDown.text().equals("")) {
+//                    String delta = riskPremiumsDown.text();
+//                    prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
+//                    prima_delta = prima_delta * -1;
+////                  System.out.println("Delta: " + prima_delta);
+//
+//                    String percent = riskPremiumsDown.text();
+//                    prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
+//                    prima_percent = prima_percent * -1;
+////                  System.out.println("Percent: " + prima_percent);
+//                } else {
+//                    prima_delta = 0f;
+//                    prima_percent = 0f;
+//                }
+//                respuestaJson.put("name", name);
+//                respuestaJson.put("country_code", country_code);
+//                respuestaJson.put("prima_value", prima_value);
+//                respuestaJson.put("prima_delta", prima_delta);
+//                respuestaJson.put("prima_percent", prima_percent);
+//
+//                if (isSameDay(country_code)) {
+//                    result = this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
+//                    respuestaJson.put("action", "update");
+//                    respuestaJson.put("result", result);
+//                } else {
+//                    result = this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
+//                    respuestaJson.put("action", "store");
+//                    respuestaJson.put("result", result);
+//                }
+//            } catch (Exception ex) {
+//                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+//                return getLatestPrimaFromDB(country_code);
+//            }
+//        }
+//        return respuestaJson;
+//    }
     private ArrayList<HashMap<String, Object>> getAllCountries() {
         ArrayList<HashMap<String, Object>> respuestaJson = new ArrayList<HashMap<String, Object>>();
         ArrayList<String> country_codes = new ArrayList<String>();
@@ -339,6 +396,7 @@ public class GetPrima extends HttpServlet {
         country_codes.add("HU");
         country_codes.add("IN");
         country_codes.add("GB");
+        country_codes.add("PL");
 
         for (String country : country_codes) {
             respuestaJson.add(this.getCountry(country));
@@ -455,6 +513,139 @@ public class GetPrima extends HttpServlet {
         return dateLastStored;
     }
 
+    private HashMap<String, String> getContryData(String country) {
+
+        HashMap<String, String> respuestaJson = new HashMap<String, String>();
+
+        if (country != null) {
+            try {
+                _rs = _stmt.executeQuery("SELECT * FROM `countries` where `country_code` = '" + country + "';");
+                while (_rs.next()) {
+                    respuestaJson.put("name", _rs.getString("name"));
+                    respuestaJson.put("indexName", _rs.getString("index_name"));
+                    respuestaJson.put("providerUrl", _rs.getString("provider_url"));
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return respuestaJson;
+    }
+
+    private HashMap<String, Float> getPrimaDataDMacro(String country_code, String providerUrl, String indexName) {
+
+        HashMap<String, Float> respuestaJson = new HashMap<String, Float>();
+        System.out.println("Country " + country_code);
+
+        Float prima_value;
+        Float prima_delta;
+        Float prima_percent;
+
+        Document doc = null;
+        try {
+            doc = Jsoup.connect(providerUrl + indexName).get();
+        } catch (IOException ex) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            Element riskPremium = doc.select(".numero").first();
+//                System.out.println("Prima: " + riskPremium.text());
+            prima_value = Float.valueOf(riskPremium.text()).floatValue();
+
+            Element riskDelta = doc.select(".odd").first();
+            String deltaStr = riskDelta.text().substring(riskDelta.text().lastIndexOf(" "));
+            prima_delta = Float.valueOf(deltaStr).floatValue();
+//                System.out.println("Trending delta: " + prima_delta);
+
+            String percentStr;
+            prima_percent = 100 * prima_delta / (prima_value - prima_delta);
+            DecimalFormat df = new DecimalFormat("0.00");
+            percentStr = df.format(prima_percent);
+            prima_percent = Float.valueOf(percentStr).floatValue();
+            //                System.out.println("Trending prima_percent: " + prima_percent);
+
+            respuestaJson.put("prima_value", prima_value);
+            respuestaJson.put("prima_delta", prima_delta);
+            respuestaJson.put("prima_percent", prima_percent);
+
+            if (isSameDay(country_code)) {
+                this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
+
+            } else {
+                this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return respuestaJson;
+    }
+
+    private HashMap<String, Float> getPrimaDataBloom(String country_code, String providerUrl, String indexName) {
+
+        HashMap<String, Float> respuestaJson = new HashMap<String, Float>();
+
+        Float prima_value;
+        Float prima_delta;
+        Float prima_percent;
+        String result;
+
+        Document doc = null;
+        try {
+            doc = Jsoup.connect(providerUrl + indexName).get();
+        } catch (IOException ex) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        try {
+            Element riskPremium = doc.select(".price").last();
+//              System.out.println("Prima: " + riskPremium.text());
+            prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
+
+            Elements riskPremiumsUp = doc.select(".trending_up");
+            Elements riskPremiumsDown = doc.select(".trending_down");
+//              System.out.println("Trending: " + riskPremiumsUp.text());
+//              System.out.println("Trending: " + riskPremiumsDown.text());
+
+            if (!riskPremiumsUp.text().equals("")) {
+                String delta = riskPremiumsUp.text();
+                prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
+//                  System.out.println("Delta: " + prima_delta);
+
+                String percent = riskPremiumsUp.text();
+                prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
+//                  System.out.println("Percent: " + prima_percent);
+            } else if (!riskPremiumsDown.text().equals("")) {
+                String delta = riskPremiumsDown.text();
+                prima_delta = Float.valueOf(delta.substring(0, delta.indexOf(" ")).replace(",", "")).floatValue();
+                prima_delta = prima_delta * -1;
+//                  System.out.println("Delta: " + prima_delta);
+
+                String percent = riskPremiumsDown.text();
+                prima_percent = Float.valueOf(percent.substring(percent.indexOf(" ") + 1, percent.length() - 1)).floatValue();
+                prima_percent = prima_percent * -1;
+//                  System.out.println("Percent: " + prima_percent);
+            } else {
+                prima_delta = 0f;
+                prima_percent = 0f;
+            }
+            respuestaJson.put("prima_value", prima_value);
+            respuestaJson.put("prima_delta", prima_delta);
+            respuestaJson.put("prima_percent", prima_percent);
+
+            if (isSameDay(country_code)) {
+                this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
+            } else {
+                this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return respuestaJson;
+    }
+
     private Boolean isUpdated(String country) {
 
         Boolean isUpdated = false;
@@ -479,7 +670,9 @@ public class GetPrima extends HttpServlet {
 
             Timestamp dateLastUpdate = this.getDateOfLastStored(country);
 
-//            System.out.println("dateLastUpdate "+ dateLastUpdate);
+//            System.out.println("dateLastUpdate " + dateLastUpdate);
+//
+//            System.out.println("dateLastUpdate " + dateToday);
 
             Calendar calToday = Calendar.getInstance();
             calToday.setTime(dateToday);
@@ -494,7 +687,7 @@ public class GetPrima extends HttpServlet {
             } else {
                 isSameDay = false;
             }
-//            System.out.println("isSameDay "+ isSameDay);
+//            System.out.println("isSameDay " + isSameDay);
         } catch (Exception e) {
             e.getLocalizedMessage();
         }
