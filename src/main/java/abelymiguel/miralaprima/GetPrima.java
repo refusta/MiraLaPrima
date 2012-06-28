@@ -535,7 +535,7 @@ public class GetPrima extends HttpServlet {
     private HashMap<String, Float> getPrimaDataDMacro(String country_code, String providerUrl, String indexName) {
 
         HashMap<String, Float> respuestaJson = new HashMap<String, Float>();
-        System.out.println("Country " + country_code);
+//        System.out.println("Country " + country_code);
 
         Float prima_value;
         Float prima_delta;
