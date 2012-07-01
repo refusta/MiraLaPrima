@@ -29,9 +29,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -156,8 +153,8 @@ public class GetPrima extends HttpServlet {
 
         try {
 
-            if (isUpdated(country_code)) {
-                respuestaJson = getLatestPrimaFromDB(country_code);
+            if (this.isUpdated(country_code) || this.isWeekend()) {
+                respuestaJson = this.getLatestPrimaFromDB(country_code);
                 respuestaJson.put("action", "fromDatabase");
             } else {
 
@@ -512,6 +509,31 @@ public class GetPrima extends HttpServlet {
 
 
         return isSameDay;
+    }
+
+    private Boolean isWeekend() {
+
+        Boolean isWeekend = false;
+        try {
+            Timestamp dateToday = this.getTimestamp();
+
+            Calendar calToday = Calendar.getInstance();
+            calToday.setTime(dateToday);
+            
+            int day = calToday.get(java.util.Calendar.DAY_OF_WEEK);
+
+            if (day == 7 || day == 1) {
+                isWeekend = true;
+            } else {
+                isWeekend = false;
+            }
+//            System.out.println("isWeekend " + isWeekend + " day " + day);
+        } catch (Exception e) {
+            e.getLocalizedMessage();
+        }
+
+
+        return isWeekend;
     }
 
     private Timestamp getTimestamp() {
