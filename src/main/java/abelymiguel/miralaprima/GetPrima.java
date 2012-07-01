@@ -153,7 +153,10 @@ public class GetPrima extends HttpServlet {
 
         try {
 
-            if (this.isUpdated(country_code) || this.isWeekend()) {
+            if (this.isWeekend()) {
+                respuestaJson = this.getLatestPrimaFromDB(country_code);
+                respuestaJson.put("action", "weekend");
+            } else if (this.isUpdated(country_code)) {
                 respuestaJson = this.getLatestPrimaFromDB(country_code);
                 respuestaJson.put("action", "fromDatabase");
             } else {
@@ -519,7 +522,7 @@ public class GetPrima extends HttpServlet {
 
             Calendar calToday = Calendar.getInstance();
             calToday.setTime(dateToday);
-            
+
             int day = calToday.get(java.util.Calendar.DAY_OF_WEEK);
 
             if (day == 7 || day == 1) {
