@@ -150,13 +150,20 @@ public class GetPrima extends HttpServlet {
         String name;
         String providerUrl;
         String result;
+        Boolean isUpdated;
 
         try {
+            
+            if (country_code.equals("ES") || country_code.equals("IT") || country_code.equals("PT") || country_code.equals("GR")) {
+                isUpdated = this.isUpdatedBloom(country_code);
+            } else {
+                isUpdated = this.isUpdatedDMacro(country_code);
+            }
 
             if (this.isWeekend()) {
                 respuestaJson = this.getLatestPrimaFromDB(country_code);
                 respuestaJson.put("action", "weekend");
-            } else if (this.isUpdated(country_code)) {
+            } else if (isUpdated) {
                 respuestaJson = this.getLatestPrimaFromDB(country_code);
                 respuestaJson.put("action", "fromDatabase");
             } else {
@@ -472,7 +479,7 @@ public class GetPrima extends HttpServlet {
         return respuestaJson;
     }
 
-    private Boolean isUpdated(String country) {
+    private Boolean isUpdatedBloom(String country) {
 
         Boolean isUpdated = false;
 
@@ -480,7 +487,22 @@ public class GetPrima extends HttpServlet {
 
         Timestamp dateLastUpdate = this.getDateOfLastStored(country);
         if (dateLastUpdate != null) {
-            if (dateLastUpdate.getTime() > date_today.getTime() - 300000) {
+            if (dateLastUpdate.getTime() > date_today.getTime() - 600000) {
+                isUpdated = true;
+            }
+        }
+        return isUpdated;
+    }
+
+    private Boolean isUpdatedDMacro(String country) {
+
+        Boolean isUpdated = false;
+
+        Timestamp date_today = this.getTimestamp();
+
+        Timestamp dateLastUpdate = this.getDateOfLastStored(country);
+        if (dateLastUpdate != null) {
+            if (dateLastUpdate.getTime() > date_today.getTime() - 1800000) {
                 isUpdated = true;
             }
         }
