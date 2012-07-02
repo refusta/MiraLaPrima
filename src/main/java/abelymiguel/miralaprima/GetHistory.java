@@ -1,6 +1,17 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ =============
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package abelymiguel.miralaprima;
 
@@ -12,7 +23,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
@@ -148,7 +158,6 @@ public class GetHistory extends HttpServlet {
                 } else {
                     query = "SELECT prima_value FROM country_values WHERE country_code = '" + country + "' ORDER BY last_update DESC";
                 }
-
             }
             _rs = _stmt.executeQuery(query);
 
@@ -156,7 +165,6 @@ public class GetHistory extends HttpServlet {
                 Float prima = _rs.getFloat("prima_value");
                 respuestaJson.add(prima);
             }
-
             _con.close();
             _stmt.close();
             _rs.close();

@@ -186,15 +186,19 @@ public class GetPrima extends HttpServlet {
                 respuestaJson.put("prima_delta", prima_delta);
                 respuestaJson.put("prima_percent", prima_percent);
 
-
-                if (isSameDay(country_code)) {
-                    result = this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
-                    respuestaJson.put("action", "update");
-                    respuestaJson.put("result", result);
-                } else {
-                    result = this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
-                    respuestaJson.put("action", "store");
-                    respuestaJson.put("result", result);
+                try {
+                    if (isSameDay(country_code)) {
+                        result = this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
+                        respuestaJson.put("action", "update");
+                        respuestaJson.put("result", result);
+                    } else {
+                        result = this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
+                        respuestaJson.put("action", "store");
+                        respuestaJson.put("result", result);
+                    }
+                } catch (Exception ex) {
+                    Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+                    return getLatestPrimaFromDB(country_code);
                 }
             }
         } catch (Exception ex) {
@@ -215,6 +219,10 @@ public class GetPrima extends HttpServlet {
         country_codes.add("IN");
         country_codes.add("GB");
         country_codes.add("PL");
+        country_codes.add("US");
+        country_codes.add("CH");
+        country_codes.add("JP");
+        country_codes.add("CN");
 
         for (String country : country_codes) {
             respuestaJson.add(this.getCountry(country));
