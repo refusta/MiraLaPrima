@@ -153,7 +153,7 @@ public class GetPrima extends HttpServlet {
         Boolean isUpdated;
 
         try {
-            
+
             if (country_code.equals("ES") || country_code.equals("IT") || country_code.equals("PT") || country_code.equals("GR")) {
                 isUpdated = this.isUpdatedBloom(country_code);
             } else {
@@ -268,8 +268,6 @@ public class GetPrima extends HttpServlet {
 
         if (country != null) {
             try {
-//                Connection con = Utils.getConnection();
-//                Statement stmt = _con.createStatement();
                 _rs = _stmt.executeQuery("SELECT id FROM `country_values` where `country_code` = '" + country + "' order by id DESC LIMIT 1;");
                 while (_rs.next()) {
                     id = _rs.getInt("id");
@@ -365,31 +363,26 @@ public class GetPrima extends HttpServlet {
         return respuestaJson;
     }
 
-    private HashMap<String, Float> getPrimaDataDMacro(String country_code, String providerUrl, String indexName) {
-
+    private HashMap<String, Float> getPrimaDataDMacro(String country_code, String providerUrl, String indexName) throws IOException {
         HashMap<String, Float> respuestaJson = new HashMap<String, Float>();
-//        System.out.println("Country " + country_code);
+        HashMap<String, Object> primaJson;
 
         Float prima_value;
         Float prima_delta;
         Float prima_percent;
 
-        Document doc = null;
-        try {
-            doc = Jsoup.connect(providerUrl + indexName).get();
-        } catch (IOException ex) {
-            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Document doc;
+        doc = Jsoup.connect(providerUrl + indexName).get();
 
         try {
             Element riskPremium = doc.select(".numero").first();
-//                System.out.println("Prima: " + riskPremium.text());
+            //                System.out.println("Prima: " + riskPremium.text());
             prima_value = Float.valueOf(riskPremium.text()).floatValue();
 
             Element riskDelta = doc.select(".odd").first();
             String deltaStr = riskDelta.text().substring(riskDelta.text().lastIndexOf(" "));
             prima_delta = Float.valueOf(deltaStr).floatValue();
-//                System.out.println("Trending delta: " + prima_delta);
+            //                System.out.println("Trending delta: " + prima_delta);
 
             String percentStr;
             prima_percent = 100 * prima_delta / (prima_value - prima_delta);
@@ -410,28 +403,28 @@ public class GetPrima extends HttpServlet {
             }
         } catch (Exception ex) {
             Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+            primaJson = getLatestPrimaFromDB(country_code);
+            respuestaJson.put("prima_value", (Float) primaJson.get("prima_value"));
+            respuestaJson.put("prima_delta", (Float) primaJson.get("prima_delta"));
+            respuestaJson.put("prima_percent", (Float) primaJson.get("prima_percent"));
         }
 
         return respuestaJson;
+
     }
 
     private HashMap<String, Float> getPrimaDataBloom(String country_code, String providerUrl, String indexName) {
 
         HashMap<String, Float> respuestaJson = new HashMap<String, Float>();
+        HashMap<String, Object> primaJson;
 
         Float prima_value;
         Float prima_delta;
         Float prima_percent;
-        String result;
 
-        Document doc = null;
+        Document doc;
         try {
             doc = Jsoup.connect(providerUrl + indexName).get();
-        } catch (IOException ex) {
-            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        try {
             Element riskPremium = doc.select(".price").last();
 //              System.out.println("Prima: " + riskPremium.text());
             prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
@@ -474,6 +467,10 @@ public class GetPrima extends HttpServlet {
             }
         } catch (Exception ex) {
             Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+            primaJson = getLatestPrimaFromDB(country_code);
+            respuestaJson.put("prima_value", (Float) primaJson.get("prima_value"));
+            respuestaJson.put("prima_delta", (Float) primaJson.get("prima_delta"));
+            respuestaJson.put("prima_percent", (Float) primaJson.get("prima_percent"));
         }
 
         return respuestaJson;
@@ -518,10 +515,6 @@ public class GetPrima extends HttpServlet {
 
             Timestamp dateLastUpdate = this.getDateOfLastStored(country);
 
-//            System.out.println("dateLastUpdate " + dateLastUpdate);
-//
-//            System.out.println("dateLastUpdate " + dateToday);
-
             Calendar calToday = Calendar.getInstance();
             calToday.setTime(dateToday);
 
@@ -535,9 +528,8 @@ public class GetPrima extends HttpServlet {
             } else {
                 isSameDay = false;
             }
-//            System.out.println("isSameDay " + isSameDay);
         } catch (Exception e) {
-            e.getLocalizedMessage();
+            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, e);
         }
 
 

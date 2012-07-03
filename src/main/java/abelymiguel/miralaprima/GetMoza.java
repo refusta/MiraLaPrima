@@ -183,6 +183,11 @@ public class GetMoza extends HttpServlet {
             _rs.close();
         } catch (SQLException ex) {
             Logger.getLogger(GetMoza.class.getName()).log(Level.SEVERE, null, ex);
+            HashMap<String, Object> objetoJsonEmergency = new HashMap<String, Object>();
+            objetoJsonEmergency.put("photo_url", "http://especiales.fhm.es/galerias/heather_doss/images/heather-doss-2.jpg");
+            objetoJsonEmergency.put("provider", "http://especiales.fhm.es/galerias/heather_doss/");
+            objetoJsonEmergency.put("country_code", "ALL");
+            respuestaJson.add(objetoJsonEmergency);
         }
         return respuestaJson;
     }

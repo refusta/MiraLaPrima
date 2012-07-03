@@ -164,6 +164,7 @@ public class SetMoza extends HttpServlet {
                 _stmt.execute("INSERT INTO `photos` (`url_prima`, `provider`, `approved`, `country_code`, `date_added`) VALUES ('" + url_moza + "', '" + provider + "', 0, '" + country_code + "', '" + date_added + "')");
                 respuestaJson.put("result", "OK");
             } else {
+                Logger.getLogger(GetMoza.class.getName()).log(Level.INFO, "The url {0} is not valid", url_moza);
                 respuestaJson.put("result", "ERROR");
             }
         } catch (SQLException ex) {
@@ -187,7 +188,7 @@ public class SetMoza extends HttpServlet {
             conexion.disconnect();
             result = true;
         } catch (IOException e) {
-            System.out.println(e.getLocalizedMessage());
+            Logger.getLogger(GetMoza.class.getName()).log(Level.WARNING, null, e);
             result = false;
         }
 
@@ -210,7 +211,6 @@ public class SetMoza extends HttpServlet {
         if (type.equals("image/jpeg") || type.equals("image/png")) {
             result = true;
         }
-//        System.out.println(type);
         return result;
     }
 
