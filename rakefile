@@ -1,6 +1,6 @@
 desc "This task is called by the Heroku scheduler add-on"
 
-task :GetPrima => :environment do
+task :GetPrima
     require 'open-uri'
     open('miralaprima.herokuapp.com/GetPrima')
     puts "Updating prima..."
