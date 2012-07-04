@@ -479,7 +479,7 @@ public class GetPrima extends HttpServlet {
 
         Timestamp dateLastUpdate = this.getDateOfLastStored(country);
         if (dateLastUpdate != null) {
-            if (dateLastUpdate.getTime() > date_today.getTime() - 600000) {
+            if (dateLastUpdate.getTime() > date_today.getTime() - 500000) {
                 isUpdated = true;
             }
         }
