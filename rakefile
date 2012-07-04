@@ -2,6 +2,6 @@ desc "This task is called by the Heroku scheduler add-on"
 
 task :GetPrima do
     require 'open-uri'
-    open('miralaprima.herokuapp.com/GetPrima')
+    open('http://miralaprima.herokuapp.com/GetPrima')
     puts "Updating prima..."
 end
