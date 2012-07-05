@@ -16,6 +16,10 @@
         <servlet-name>GetHistory</servlet-name>
         <servlet-class>abelymiguel.miralaprima.GetHistory</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>CheckMozas</servlet-name>
+        <servlet-class>abelymiguel.miralaprima.CheckMozas</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>GetPrima</servlet-name>
         <url-pattern>/GetPrima</url-pattern>
@@ -31,6 +35,10 @@
     <servlet-mapping>
         <servlet-name>GetHistory</servlet-name>
         <url-pattern>/GetHistory</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CheckMozas</servlet-name>
+        <url-pattern>/CheckMozas</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

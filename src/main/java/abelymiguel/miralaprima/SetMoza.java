@@ -160,7 +160,7 @@ public class SetMoza extends HttpServlet {
             } else {
                 provider = "Provider not found";
             }
-            if (checkUrlMoza(url_moza) && checkMimeUrlMoza(url_moza)) {
+            if (checkUrlMoza(url_moza) && checkMimeUrlMoza(url_moza) && !url_moza.contains("'")) {
                 _stmt.execute("INSERT INTO `photos` (`url_prima`, `provider`, `approved`, `country_code`, `date_added`) VALUES ('" + url_moza + "', '" + provider + "', 0, '" + country_code + "', '" + date_added + "')");
                 respuestaJson.put("result", "OK");
             } else {
