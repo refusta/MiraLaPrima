@@ -193,15 +193,15 @@ public class GetPrima extends HttpServlet {
                 respuestaJson.put("prima_delta", prima_delta);
                 respuestaJson.put("prima_percent", prima_percent);
 
-                    if (isSameDay(country_code)) {
-                        result = this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
-                        respuestaJson.put("action", "update");
-                        respuestaJson.put("result", result);
-                    } else {
-                        result = this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
-                        respuestaJson.put("action", "store");
-                        respuestaJson.put("result", result);
-                    }
+                if (isSameDay(country_code)) {
+                    result = this.updatePrimaInDB(prima_value, prima_delta, prima_percent, this.getLatestPrimaIdFromDB(country_code));
+                    respuestaJson.put("action", "update");
+                    respuestaJson.put("result", result);
+                } else {
+                    result = this.storePrimaInDB(prima_value, prima_delta, prima_percent, country_code);
+                    respuestaJson.put("action", "store");
+                    respuestaJson.put("result", result);
+                }
             }
         } catch (Exception ex) {
             Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
@@ -333,7 +333,8 @@ public class GetPrima extends HttpServlet {
                     dateLastStored = _rs.getTimestamp("last_update");
                 }
             } catch (SQLException ex) {
-                Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(GetPrima.class.getName()).log(Level.WARNING, null, ex);
+                dateLastStored = this.getTimestamp();
             }
         }
         return dateLastStored;
@@ -475,13 +476,19 @@ public class GetPrima extends HttpServlet {
 
         Boolean isUpdated = false;
 
-        Timestamp date_today = this.getTimestamp();
+        try {
 
-        Timestamp dateLastUpdate = this.getDateOfLastStored(country);
-        if (dateLastUpdate != null) {
-            if (dateLastUpdate.getTime() > date_today.getTime() - 500000) {
-                isUpdated = true;
+            Timestamp date_today = this.getTimestamp();
+
+            Timestamp dateLastUpdate = this.getDateOfLastStored(country);
+            if (dateLastUpdate != null) {
+                if (dateLastUpdate.getTime() > date_today.getTime() - 500000) {
+                    isUpdated = true;
+                }
             }
+        } catch (Exception e) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.WARNING, null, e);
+            isUpdated = true;
         }
         return isUpdated;
     }
@@ -490,13 +497,18 @@ public class GetPrima extends HttpServlet {
 
         Boolean isUpdated = false;
 
-        Timestamp date_today = this.getTimestamp();
+        try {
+            Timestamp date_today = this.getTimestamp();
 
-        Timestamp dateLastUpdate = this.getDateOfLastStored(country);
-        if (dateLastUpdate != null) {
-            if (dateLastUpdate.getTime() > date_today.getTime() - 1800000) {
-                isUpdated = true;
+            Timestamp dateLastUpdate = this.getDateOfLastStored(country);
+            if (dateLastUpdate != null) {
+                if (dateLastUpdate.getTime() > date_today.getTime() - 1800000) {
+                    isUpdated = true;
+                }
             }
+        } catch (Exception e) {
+            Logger.getLogger(GetPrima.class.getName()).log(Level.WARNING, null, e);
+            isUpdated = true;
         }
         return isUpdated;
     }
@@ -524,7 +536,8 @@ public class GetPrima extends HttpServlet {
                 isSameDay = false;
             }
         } catch (Exception e) {
-            Logger.getLogger(GetPrima.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(GetPrima.class.getName()).log(Level.WARNING, null, e);
+            isSameDay = true;
         }
 
 
@@ -533,7 +546,7 @@ public class GetPrima extends HttpServlet {
 
     private Boolean isWeekend() {
 
-        Boolean isWeekend = false;
+        Boolean isWeekend;
         try {
             Timestamp dateToday = this.getTimestamp();
 
@@ -549,7 +562,8 @@ public class GetPrima extends HttpServlet {
             }
 //            System.out.println("isWeekend " + isWeekend + " day " + day);
         } catch (Exception e) {
-            e.getLocalizedMessage();
+            Logger.getLogger(GetPrima.class.getName()).log(Level.WARNING, null, e);
+            isWeekend = false;
         }
 
 
