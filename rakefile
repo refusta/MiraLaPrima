@@ -8,4 +8,5 @@ task :GetPrima do
         require 'open-uri'
         open('http://miralaprima.herokuapp.com/GetPrima')
         puts "Updating prima..."
+    end
 end
