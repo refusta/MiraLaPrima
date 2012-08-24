@@ -4,7 +4,7 @@ task :GetPrima do
     time = Time.new
     puts "Day of week"
     puts time.wday
-    if time.wday != 0
+    if time.wday != 0 or time.wday != 6
         require 'open-uri'
         open('http://miralaprima.herokuapp.com/GetPrima')
         puts "Updating prima..."
