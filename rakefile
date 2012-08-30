@@ -2,8 +2,6 @@ desc "This task is called to refesh the prima values"
 
 task :GetPrima do
     time = Time.new
-    puts "Day of week"
-    puts time.wday
     if time.wday != 0 and time.wday != 6
         require 'open-uri'
         open('http://miralaprima.herokuapp.com/GetPrima')
