@@ -154,7 +154,7 @@ public class GetPrima extends HttpServlet {
 
         try {
 
-            if (country_code.equals("ES") || country_code.equals("IT") || country_code.equals("PT") || country_code.equals("GR")) {
+            if (country_code.equals("ES") || country_code.equals("IT") || country_code.equals("GR")) {
                 isUpdated = this.isUpdatedBloom(country_code);
             } else {
                 isUpdated = this.isUpdatedDMacro(country_code);
