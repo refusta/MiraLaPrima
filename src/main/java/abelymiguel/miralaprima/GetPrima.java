@@ -154,7 +154,7 @@ public class GetPrima extends HttpServlet {
 
         try {
 
-            if (country_code.equals("ES") || country_code.equals("IT") || country_code.equals("GR")) {
+            if (country_code.equals("GR")) {
                 isUpdated = this.isUpdatedBloom(country_code);
             } else {
                 isUpdated = this.isUpdatedDMacro(country_code);
@@ -177,7 +177,7 @@ public class GetPrima extends HttpServlet {
                 Float prima_delta;
                 Float prima_percent;
 
-                if (country_code.equals("ES") || country_code.equals("IT") || country_code.equals("GR")) {
+                if (country_code.equals("GR")) {
                     primaJson = this.getPrimaDataBloom(country_code, providerUrl, country_prime);
                 } else {
                     primaJson = this.getPrimaDataDMacro(country_code, providerUrl, country_prime);
