@@ -34,7 +34,6 @@ public class Main {
         context.addServlet(new ServletHolder(new GetMoza()), "/GetMoza");
         context.addServlet(new ServletHolder(new SetMoza()), "/SetMoza");
         context.addServlet(new ServletHolder(new GetHistory()), "/GetHistory");
-//        context.addServlet(new ServletHolder(new CheckMozas()), "/CheckMozas");
         server.start();
         server.join();
     }
