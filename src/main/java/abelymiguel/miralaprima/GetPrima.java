@@ -153,12 +153,7 @@ public class GetPrima extends HttpServlet {
         Boolean isUpdated;
 
         try {
-
-            if (country_code.equals("GR")) {
-                isUpdated = this.isUpdatedBloom(country_code);
-            } else {
-                isUpdated = this.isUpdatedDMacro(country_code);
-            }
+            isUpdated = this.isUpdatedDMacro(country_code);
 
             if (this.isWeekend()) {
                 respuestaJson = this.getLatestPrimaFromDB(country_code);
@@ -177,11 +172,8 @@ public class GetPrima extends HttpServlet {
                 Float prima_delta;
                 Float prima_percent;
 
-                if (country_code.equals("GR")) {
-                    primaJson = this.getPrimaDataBloom(country_code, providerUrl, country_prime);
-                } else {
-                    primaJson = this.getPrimaDataDMacro(country_code, providerUrl, country_prime);
-                }
+                primaJson = this.getPrimaDataDMacro(country_code, providerUrl, country_prime);
+
 
                 prima_value = primaJson.get("prima_value");
                 prima_delta = primaJson.get("prima_delta");
