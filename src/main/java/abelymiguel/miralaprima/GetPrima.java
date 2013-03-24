@@ -415,7 +415,7 @@ public class GetPrima extends HttpServlet {
             doc = Jsoup.connect(providerUrl + indexName).get();
             Element riskPremium = doc.select(".price").last();
 //              System.out.println("Prima: " + riskPremium.text());
-            prima_value = Float.valueOf(riskPremium.text().replace(",", "")).floatValue();
+            prima_value = Float.valueOf(riskPremium.text().replace(".", "")).floatValue();
 
             Elements riskPremiumsUp = doc.select(".trending_up");
             Elements riskPremiumsDown = doc.select(".trending_down");
