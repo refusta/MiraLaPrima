@@ -365,10 +365,10 @@ public class GetPrima extends HttpServlet {
         try {
             Element riskPremium = doc.select(".numero").first();
             //                System.out.println("Prima: " + riskPremium.text());
-            prima_value = Float.valueOf(riskPremium.text()).floatValue();
+            prima_value = Float.valueOf(riskPremium.text().replace(".", "")).floatValue();
 
-            Element riskDelta = doc.select(".odd").first();
-            String deltaStr = riskDelta.text().substring(riskDelta.text().lastIndexOf(" "));
+            Element riskDelta = doc.select(".text-success").first();
+            String deltaStr = riskDelta.text().substring(riskDelta.text().indexOf(">")+1);
             prima_delta = Float.valueOf(deltaStr).floatValue();
             //                System.out.println("Trending delta: " + prima_delta);
 
